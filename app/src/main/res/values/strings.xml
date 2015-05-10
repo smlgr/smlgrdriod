@@ -1,6 +1,25 @@
 <resources>
-    <string name="app_name">SMLGRDroid</string>
+    <string name="app_name" translatable="false">SMLGRDroid</string>
 
-    <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+
+    <string name="activity_generic_loading">loading...</string>
+
+    <string name="activity_main_power_label">Power</string>
+
+    <string name="activity_main_today_prod_label">Today production</string>
+    <string name="activity_main_today_max_label">Max production</string>
+    <string name="activity_main_today_poweron_label">Started at</string>
+    <string name="activity_main_today_poweroff_label">Ended at</string>
+
+    <string name="activity_main_yesterday_prod_label">Yesterday production</string>
+    <string name="activity_main_yesterday_max_label">Yesterday Max prod</string>
+    <string name="activity_main_yesterday_poweron_label">Started at</string>
+    <string name="activity_main_yesterday_poweroff_label">Ended at</string>
+
+    <string name="activity_main_voltage_label">Voltage</string>
+    <string name="activity_main_temp_label">Inverter Temp</string>
+    <string name="activity_main_frequency_label">Frequency</string>
+
+    <string name="activity_main_lastcontact_label">Last contact</string>
 </resources>

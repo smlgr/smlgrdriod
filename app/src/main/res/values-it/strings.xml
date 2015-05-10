@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SMLGRDroid</string>
+    <string name="activity_main_power_label">Potenza</string>
+    <string name="activity_generic_loading">caricamento...</string>
+    <string name="action_settings">Impostazioni</string>
+    <string name="activity_main_frequency_label">Frequenza</string>
+    <string name="activity_main_lastcontact_label">Ultimo contatto</string>
+    <string name="activity_main_temp_label">Temperatura</string>
+    <string name="activity_main_today_max_label">Picco masimo</string>
+    <string name="activity_main_today_poweroff_label">Spento alle</string>
+    <string name="activity_main_today_poweron_label">Acceso alle</string>
+    <string name="activity_main_today_prod_label">Produzione</string>
+    <string name="activity_main_voltage_label">Volt</string>
+    <string name="activity_main_yesterday_max_label">Picco massimo ieri</string>
+    <string name="activity_main_yesterday_poweroff_label">Spento alle</string>
+    <string name="activity_main_yesterday_poweron_label">Acceso alle</string>
+    <string name="activity_main_yesterday_prod_label">Produzione ieri</string>
+</resources>
