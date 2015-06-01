@@ -11,16 +11,26 @@ import android.view.MenuItem;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.thehellnet.mobile.smlgrdroid.R;
 import org.thehellnet.mobile.smlgrdroid.config.I;
 import org.thehellnet.mobile.smlgrdroid.service.LiveData;
 import org.thehellnet.mobile.smlgrdroid.service.LiveDataThread;
+import org.thehellnet.mobile.smlgrdroid.service.OnceData;
+import org.thehellnet.mobile.smlgrdroid.service.OnceDataThread;
 
 public class MainActivity extends Activity {
-    public enum Status {OFF, LOADING};
+    public enum Status {OFF, LOADING}
+
+    ;
 
     private LiveDataThread liveDataThread;
     private LiveDataReceiver liveDataReceiver;
+
+    private OnceDataThread onceDataThread;
+    private OnceDataReceiver onceDataReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +58,6 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        updateMaxPower(2750);
         handleThreads(true);
     }
 
@@ -59,17 +68,27 @@ public class MainActivity extends Activity {
     }
 
     private void handleThreads(boolean status) {
-        if(status) {
+        if (status) {
             initValues(Status.LOADING);
             liveDataThread = new LiveDataThread(getApplicationContext());
             liveDataReceiver = new LiveDataReceiver();
-            registerReceiver(liveDataReceiver, new IntentFilter(I.UpdateUI.INTENT));
+            registerReceiver(liveDataReceiver, new IntentFilter(I.UpdateUI.INTENT_LIVE));
             liveDataThread.start();
+
+            onceDataThread = new OnceDataThread(getApplicationContext());
+            onceDataReceiver = new OnceDataReceiver();
+            registerReceiver(onceDataReceiver, new IntentFilter(I.UpdateUI.INTENT_ONCE));
+            onceDataThread.getOnce();
         } else {
+            unregisterReceiver(onceDataReceiver);
+            onceDataReceiver = null;
+            onceDataThread = null;
+
             liveDataThread.stop();
             unregisterReceiver(liveDataReceiver);
             liveDataReceiver = null;
             liveDataThread = null;
+
             initValues(Status.OFF);
         }
     }
@@ -91,10 +110,17 @@ public class MainActivity extends Activity {
         powerValue.setText(String.format("%d", value));
     }
 
+    private void updateLastContact() {
+        DateTimeFormatter pattern = DateTimeFormat.forPattern("HH:mm:ss");
+
+        TextView lastContact = (TextView) findViewById(R.id.lastcontact_value);
+        lastContact.setText(pattern.print(new DateTime()));
+    }
+
     private void initValues(Status status) {
         String text = "";
 
-        if(status == Status.LOADING) {
+        if (status == Status.LOADING) {
             text = getString(R.string.activity_generic_loading);
         }
 
@@ -134,23 +160,60 @@ public class MainActivity extends Activity {
     }
 
     private void updateLiveData(LiveData data) {
-        updatePowerBar(data.getPower());
+        updatePowerBar(data.getAc_power() / 10);
 
         TextView todayProd = (TextView) findViewById(R.id.today_prod_value);
-        todayProd.setText(String.format("%.01f KW/h", data.getTodayProd()));
-
+        todayProd.setText(String.format("%.01f KW/h", (float) data.getProduction() / 10));
         TextView todayVoltage = (TextView) findViewById(R.id.today_voltage_value);
-        todayVoltage.setText(String.format("%.01f V", data.getTodayVoltage()));
+        todayVoltage.setText(String.format("%.01f V", (float) data.getAc_voltage() / 10));
         TextView todayTemp = (TextView) findViewById(R.id.today_temp_value);
-        todayTemp.setText(String.format("%d °C", data.getTodayTemp()));
+        todayTemp.setText(String.format("%.01f °C", (float) data.getTemperature() / 10));
         TextView todayFrequency = (TextView) findViewById(R.id.today_frequency_value);
-        todayFrequency.setText(String.format("%.02f Hz", data.getTodayFrequency()));
+        todayFrequency.setText(String.format("%.02f Hz", (float) data.getAc_frequency() / 100));
+    }
+
+    private void updateOnceData(OnceData data) {
+        DateTimeFormatter pattern = DateTimeFormat.forPattern("HH:mm:ss");
+
+        updateMaxPower(data.getMaxPower());
+
+        TextView todayMaxProd = (TextView) findViewById(R.id.today_max_value);
+        todayMaxProd.setText(String.format("%d W", data.getTodayMaxProd() / 10));
+
+        TextView todayMaxTime = (TextView) findViewById(R.id.today_max_time);
+        todayMaxTime.setText(pattern.print(data.getTodayMaxTime()));
+        TextView todayStart = (TextView) findViewById(R.id.today_poweron_value);
+        todayStart.setText(pattern.print(data.getTodayStart()));
+        TextView todayStop = (TextView) findViewById(R.id.today_poweroff_value);
+        todayStop.setText(pattern.print(data.getTodayStop()));
+
+        TextView yesterdayProd = (TextView) findViewById(R.id.yesterday_prod_value);
+        yesterdayProd.setText(String.format("%.01f KW/h", (float) data.getYesterdayProd() / 10));
+
+        TextView yesterdayMaxProd = (TextView) findViewById(R.id.yesterday_max_value);
+        yesterdayMaxProd.setText(String.format("%d W", data.getYesterdayMaxProd() / 10));
+
+        TextView yesterdayMaxTime = (TextView) findViewById(R.id.yesterday_max_time);
+        yesterdayMaxTime.setText(pattern.print(data.getYesterdayMaxTime()));
+        TextView yesterdayStart = (TextView) findViewById(R.id.yesterday_poweron_value);
+        yesterdayStart.setText(pattern.print(data.getYesterdayStart()));
+        TextView yesterdayStop = (TextView) findViewById(R.id.yesterday_poweroff_value);
+        yesterdayStop.setText(pattern.print(data.getYesterdayStop()));
     }
 
     private class LiveDataReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            updateLiveData((LiveData) intent.getSerializableExtra(I.UpdateUI.LIVE));
+            updateLiveData((LiveData) intent.getSerializableExtra("data"));
+            updateLastContact();
+        }
+    }
+
+    private class OnceDataReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            updateOnceData((OnceData) intent.getSerializableExtra("data"));
+            updateLastContact();
         }
     }
 }

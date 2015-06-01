@@ -12,7 +12,6 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 
-import org.joda.time.DateTime;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.thehellnet.mobile.smlgrdroid.config.C;
@@ -49,21 +48,45 @@ public class OnceDataThread {
         JsonObjectRequest req = new JsonObjectRequest(Request.Method.GET, C.server.ONCE_URL, "", new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
-                OnceData data = new OnceData();
+                OnceData onceData = new OnceData();
+                JSONObject data;
 
                 try {
-                    data.setMax(response.getInt("max"));
-                    data.setTodayStart(new DateTime(response.getString("todayStart")));
-                    data.setTodayStop(new DateTime(response.getString("todayStop")));
-                    data.setYesterdayProd((float) response.getDouble("yesterdayProd"));
-                    data.setYesterdayMax((float) response.getDouble("yesterdayMax"));
-                    data.setYesterdayStart(new DateTime(response.getString("yesterdayStart")));
-                    data.setYesterdayStop(new DateTime(response.getString("yesterdayStop")));
+                    if (!response.getBoolean("success"))
+                        return;
+                    data = response.getJSONObject("data");
+                    onceData.setMaxPower(data.getInt("maxPower"));
                 } catch (JSONException e) {
-                    e.printStackTrace();
-                } finally {
-                    sendData(I.UpdateUI.ONCE, data);
+                    return;
                 }
+
+                try {
+                    onceData.setTodayMaxProd(data.getInt("todayMaxProduction"));
+                    onceData.setTodayMaxTime(data.getLong("todayMaxTime"));
+                    onceData.setTodayStart(data.getLong("todayStartTime"));
+                    onceData.setTodayStop(data.getLong("todayStopTime"));
+                } catch (JSONException e) {
+                    onceData.setTodayMaxProd(0);
+                    onceData.setTodayMaxTime(0);
+                    onceData.setTodayStart(0);
+                    onceData.setTodayStop(0);
+                }
+
+                try {
+                    onceData.setYesterdayProd(data.getInt("yesterdayProduction"));
+                    onceData.setYesterdayMaxProd(data.getInt("yesterdayMaxProduction"));
+                    onceData.setYesterdayMaxTime(data.getLong("yesterdayMaxTime"));
+                    onceData.setYesterdayStart(data.getLong("yesterdayStartTime"));
+                    onceData.setYesterdayStop(data.getLong("yesterdayStopTime"));
+                } catch (JSONException e) {
+                    onceData.setYesterdayProd(0);
+                    onceData.setYesterdayMaxProd(0);
+                    onceData.setYesterdayMaxTime(0);
+                    onceData.setYesterdayStart(0);
+                    onceData.setYesterdayStop(0);
+                }
+
+                sendData(onceData);
             }
         }, new Response.ErrorListener() {
             @Override
@@ -75,9 +98,9 @@ public class OnceDataThread {
         queue.add(req);
     }
 
-    private void sendData(String type, Serializable data) {
-        Intent intent = new Intent(I.UpdateUI.INTENT);
-        intent.putExtra(type, data);
+    private void sendData(Serializable data) {
+        Intent intent = new Intent(I.UpdateUI.INTENT_ONCE);
+        intent.putExtra("data", data);
         context.sendBroadcast(intent);
     }
 }

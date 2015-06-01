@@ -53,18 +53,28 @@ public class LiveDataThread {
         JsonObjectRequest req = new JsonObjectRequest(Request.Method.GET, C.server.LIVE_URL, "", new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
-                LiveData data = new LiveData();
+                LiveData liveData = new LiveData();
 
                 try {
-                    data.setPower((int) response.getDouble("power"));
-                    data.setTodayProd((float) response.getDouble("todayProd"));
-                    data.setTodayVoltage((float) response.getDouble("todayVoltage"));
-                    data.setTodayTemp(response.getInt("todayTemp"));
-                    data.setTodayFrequency((float) response.getDouble("todayFrequency"));
+                    if (!response.getBoolean("success"))
+                        return;
+
+                    JSONObject data = response.getJSONObject("data");
+
+                    liveData.setAc_power(data.getInt("ac_power"));
+                    liveData.setAc_voltage(data.getInt("ac_voltage"));
+                    liveData.setAc_current(data.getInt("ac_current"));
+                    liveData.setAc_frequency(data.getInt("ac_frequency"));
+                    liveData.setDc1_voltage(data.getInt("dc1_voltage"));
+                    liveData.setDc1_current(data.getInt("dc1_current"));
+                    liveData.setDc2_voltage(data.getInt("dc2_voltage"));
+                    liveData.setDc2_current(data.getInt("dc2_current"));
+                    liveData.setTemperature(data.getInt("temperature"));
+                    liveData.setProduction(data.getInt("production"));
                 } catch (JSONException e) {
                     e.printStackTrace();
                 } finally {
-                    sendData(I.UpdateUI.LIVE, data);
+                    sendData(liveData);
                 }
             }
         }, new Response.ErrorListener() {
@@ -77,9 +87,9 @@ public class LiveDataThread {
         queue.add(req);
     }
 
-    private void sendData(String type, Serializable data) {
-        Intent intent = new Intent(I.UpdateUI.INTENT);
-        intent.putExtra(type, data);
+    private void sendData(Serializable data) {
+        Intent intent = new Intent(I.UpdateUI.INTENT_LIVE);
+        intent.putExtra("data", data);
         context.sendBroadcast(intent);
     }
 }
