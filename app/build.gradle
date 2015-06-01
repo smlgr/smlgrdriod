@@ -8,8 +8,8 @@ android {
         applicationId "org.thehellnet.mobile.smlgrdroid"
         minSdkVersion 19
         targetSdkVersion 22
-        versionCode 1
-        versionName "0.0.1"
+        versionCode 19
+        versionName "0.9.0"
     }
     buildTypes {
         release {
